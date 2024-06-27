@@ -1,44 +1,50 @@
 package main
 
 import (
-	"aurora/internal/tokens"
-	"github.com/gin-gonic/gin"
-	"github.com/joho/godotenv"
+	"aurora/initialize"
+	"embed"
+	"io/fs"
+	"log"
+	"net/http"
 	"os"
+
+	"github.com/gin-gonic/gin"
+
+	"github.com/acheong08/endless"
+	"github.com/joho/godotenv"
 )
 
-var HOST string
-var PORT string
-var ACCESS_TOKENS tokens.AccessToken
-var PROXY_URL string
+//go:embed web/*
+var staticFiles embed.FS
 
-func init() {
-	_ = godotenv.Load(".env")
-
-	HOST = os.Getenv("SERVER_HOST")
-	PORT = os.Getenv("SERVER_PORT")
-	PROXY_URL = os.Getenv("PROXY_URL")
-	if HOST == "" {
-		HOST = "0.0.0.0"
-	}
-	if PORT == "" {
-		PORT = "8080"
-	}
-}
 func main() {
-	router := gin.Default()
+	gin.SetMode(gin.ReleaseMode)
+	router := initialize.RegisterRouter()
+	subFS, err := fs.Sub(staticFiles, "web")
+	if err != nil {
+		log.Fatal(err)
+	}
+	router.StaticFS("/web", http.FS(subFS))
 
-	router.Use(cors)
+	_ = godotenv.Load(".env")
+	host := os.Getenv("SERVER_HOST")
+	port := os.Getenv("SERVER_PORT")
+	tlsCert := os.Getenv("TLS_CERT")
+	tlsKey := os.Getenv("TLS_KEY")
 
-	router.GET("/ping", func(c *gin.Context) {
-		c.JSON(200, gin.H{
-			"message": "pong",
-		})
-	})
+	if host == "" {
+		host = "0.0.0.0"
+	}
+	if port == "" {
+		port = os.Getenv("PORT")
+		if port == "" {
+			port = "8080"
+		}
+	}
 
-	router.OPTIONS("/v1/chat/completions", optionsHandler)
-	router.POST("/v1/chat/completions", nightmare)
-
-	router.Run(HOST + ":" + PORT)
-
+	if tlsCert != "" && tlsKey != "" {
+		_ = endless.ListenAndServeTLS(host+":"+port, tlsCert, tlsKey, router)
+	} else {
+		_ = endless.ListenAndServe(host+":"+port, router)
+	}
 }

@@ -49,7 +49,7 @@ func StopChunk(reason string) ChatCompletionChunk {
 		ID:      "chatcmpl-QXlha2FBbmROaXhpZUFyZUF3ZXNvbWUK",
 		Object:  "chat.completion.chunk",
 		Created: 0,
-		Model:   "gpt-3.5-turbo-0301",
+		Model:   "gpt-3.5-turbo-0125",
 		Choices: []Choices{
 			{
 				Index:        0,
@@ -82,16 +82,16 @@ type usage struct {
 	TotalTokens      int `json:"total_tokens"`
 }
 
-func NewChatCompletion(full_test string) ChatCompletion {
+func NewChatCompletion(full_test string, input_tokens, output_tokens int) ChatCompletion {
 	return ChatCompletion{
 		ID:      "chatcmpl-QXlha2FBbmROaXhpZUFyZUF3ZXNvbWUK",
 		Object:  "chat.completion",
 		Created: int64(0),
-		Model:   "gpt-3.5-turbo-0301",
+		Model:   "gpt-3.5-turbo-0125",
 		Usage: usage{
-			PromptTokens:     0,
-			CompletionTokens: 0,
-			TotalTokens:      0,
+			PromptTokens:     input_tokens,
+			CompletionTokens: output_tokens,
+			TotalTokens:      input_tokens + output_tokens,
 		},
 		Choices: []Choice{
 			{
@@ -102,5 +102,17 @@ func NewChatCompletion(full_test string) ChatCompletion {
 				Index: 0,
 			},
 		},
+	}
+}
+
+type OpenAIAccessTokenWithSession struct {
+	SessionToken string `json:"session_token"`
+	AccessToken  string `json:"access_token"`
+}
+
+func NewOpenAISessionToken(session_token string, access_token string) *OpenAIAccessTokenWithSession {
+	return &OpenAIAccessTokenWithSession{
+		SessionToken: session_token,
+		AccessToken:  access_token,
 	}
 }
