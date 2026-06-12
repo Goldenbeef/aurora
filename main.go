@@ -1,44 +1,38 @@
 package main
 
 import (
-	"aurora/internal/tokens"
-	"github.com/gin-gonic/gin"
-	"github.com/joho/godotenv"
+	"aurora/initialize"
 	"os"
+
+	"github.com/gin-gonic/gin"
+
+	"github.com/acheong08/endless"
+	"github.com/joho/godotenv"
 )
 
-var HOST string
-var PORT string
-var ACCESS_TOKENS tokens.AccessToken
-var PROXY_URL string
-
-func init() {
-	_ = godotenv.Load(".env")
-
-	HOST = os.Getenv("SERVER_HOST")
-	PORT = os.Getenv("SERVER_PORT")
-	PROXY_URL = os.Getenv("PROXY_URL")
-	if HOST == "" {
-		HOST = "0.0.0.0"
-	}
-	if PORT == "" {
-		PORT = "8080"
-	}
-}
 func main() {
-	router := gin.Default()
+	gin.SetMode(gin.ReleaseMode)
+	_ = godotenv.Load(".env")
+	router := initialize.RegisterRouter()
 
-	router.Use(cors)
+	host := os.Getenv("SERVER_HOST")
+	port := os.Getenv("SERVER_PORT")
+	tlsCert := os.Getenv("TLS_CERT")
+	tlsKey := os.Getenv("TLS_KEY")
 
-	router.GET("/ping", func(c *gin.Context) {
-		c.JSON(200, gin.H{
-			"message": "pong",
-		})
-	})
+	if host == "" {
+		host = "0.0.0.0"
+	}
+	if port == "" {
+		port = os.Getenv("PORT")
+		if port == "" {
+			port = "8080"
+		}
+	}
 
-	router.OPTIONS("/v1/chat/completions", optionsHandler)
-	router.POST("/v1/chat/completions", nightmare)
-
-	router.Run(HOST + ":" + PORT)
-
+	if tlsCert != "" && tlsKey != "" {
+		_ = endless.ListenAndServeTLS(host+":"+port, tlsCert, tlsKey, router)
+	} else {
+		_ = endless.ListenAndServe(host+":"+port, router)
+	}
 }

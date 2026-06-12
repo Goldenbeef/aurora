@@ -5,28 +5,6 @@ type ChatGPTResponse struct {
 	ConversationID string      `json:"conversation_id"`
 	Error          interface{} `json:"error"`
 }
-type ChatGPTWSSResponse struct {
-	WssUrl         string `json:"wss_url"`
-	ConversationId string `json:"conversation_id,omitempty"`
-	ResponseId     string `json:"response_id,omitempty"`
-}
-
-type WSSMsgResponse struct {
-	SequenceId int                `json:"sequenceId"`
-	Type       string             `json:"type"`
-	From       string             `json:"from"`
-	DataType   string             `json:"dataType"`
-	Data       WSSMsgResponseData `json:"data"`
-}
-
-type WSSMsgResponseData struct {
-	Type           string `json:"type"`
-	Body           string `json:"body"`
-	MoreBody       bool   `json:"more_body"`
-	ResponseId     string `json:"response_id"`
-	ConversationId string `json:"conversation_id"`
-}
-
 type Message struct {
 	ID         string      `json:"id"`
 	Author     Author      `json:"author"`
@@ -77,4 +55,18 @@ type DalleContent struct {
 			Prompt string `json:"prompt"`
 		} `json:"dalle"`
 	} `json:"metadata"`
+}
+
+type ProofWork struct {
+	Difficulty string `json:"difficulty,omitempty"`
+	Required   bool   `json:"required"`
+	Seed       string `json:"seed,omitempty"`
+}
+
+type RequirementsResponse struct {
+	Proof     ProofWork `json:"proofofwork,omitempty"`
+	Turnstile struct {
+		Required bool `json:"required"`
+	} `json:"turnstile"`
+	Token string `json:"token"`
 }
